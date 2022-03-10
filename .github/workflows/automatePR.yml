@@ -1,0 +1,26 @@
+name: Automate PR
+on:
+  issues:
+    types:
+      - labeled
+      
+permissions:
+  contents: read
+
+jobs:
+  Automate:
+    if: github.event.label.name == 'Automate'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: Devils-Knight/Automate-PR
+    
+      - name: Automate PR
+        uses: Devils-Knight/Automate-PR@main
+        with:
+          github-token: ${{secrets.PAT }}
+          issue-id: ${{ github.event.issue.number}}

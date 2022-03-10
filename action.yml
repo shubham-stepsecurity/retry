@@ -1,0 +1,15 @@
+name: "Automate-PR"
+description: "Autmatically create pull request with added permissions to workflows"
+inputs:
+  issue-id:
+    description: "ID of newly created KB issue"
+    required: true 
+  github-token:
+    description: "github-token to be used for octokit authentication"
+    required: true
+    default: "${{github.token}}"
+    
+
+runs:
+  using: node16
+  main: dist/src/index.js
