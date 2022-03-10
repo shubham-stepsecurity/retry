@@ -79,6 +79,7 @@ try{
             
         }catch(err){
             core.setFailed(err)
+            break
         }   
     }
 }catch(err){

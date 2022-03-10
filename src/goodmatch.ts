@@ -71,8 +71,8 @@ async function alreadyCreated(client:any, owner:string, repo:string){
   
 // get good matches
 export async function getGoodMatch(client:any, topic:string, min_star:number){
-  try{
-    while(true){
+  while(true){
+    try{
       const {owner,repo,path} = await getRepoWithWorkflow(client,topic)
       CURR_MATCH++
       if(await getRepoStars(client,owner,repo)>=min_star && !(await alreadyCreated(client,owner,repo))){
@@ -84,8 +84,9 @@ export async function getGoodMatch(client:any, topic:string, min_star:number){
           content:content
         } 
       }
-    }
-  }catch(err){
-    core.setFailed(err)
-  }   
+    }catch(err){
+      core.setFailed(err)
+      return
+    }   
+  }
 }

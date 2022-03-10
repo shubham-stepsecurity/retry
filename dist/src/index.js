@@ -23576,8 +23576,8 @@ async function alreadyCreated(client, owner, repo) {
 }
 // get good matches
 async function getGoodMatch(client, topic, min_star) {
-    try {
-        while (true) {
+    while (true) {
+        try {
             const { owner, repo, path } = await getRepoWithWorkflow(client, topic);
             CURR_MATCH++;
             if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
@@ -23590,9 +23590,10 @@ async function getGoodMatch(client, topic, min_star) {
                 };
             }
         }
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+        catch (err) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+            return;
+        }
     }
 }
 
@@ -23683,6 +23684,7 @@ try {
         }
         catch (err) {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+            break;
         }
     }
 }
