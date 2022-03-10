@@ -23508,7 +23508,6 @@ function get_pr_update(owner, repository, path) {
 
 let CURR_PAGE = 1;
 let CURR_MATCH = 6;
-let search;
 async function get_details(client, issue_id, owner, repo) {
     try {
         const resp = await client.rest.issues.get({ issue_number: Number(issue_id), owner: owner, repo: repo });
@@ -23526,20 +23525,14 @@ async function get_details(client, issue_id, owner, repo) {
 }
 async function getRepoWithWorkflow(client, topic) {
     try {
-        if (CURR_MATCH == 6) {
-            CURR_PAGE++;
-            search = await client.rest.search.code({
-                q: topic + " path:.github/workflows",
-                per_page: 5,
-                page: CURR_PAGE
-            });
-            CURR_MATCH %= 6;
-        }
-        return {
-            owner: search.data.items[CURR_MATCH].repository.owner.login,
-            repo: search.data.items[CURR_MATCH].repository.name,
-            path: search.data.items[CURR_MATCH].path
-        };
+        CURR_PAGE++;
+        const repoArr = await client.rest.search.code({
+            q: topic + " path:.github/workflows",
+            per_page: 5,
+            page: CURR_PAGE
+        });
+        CURR_MATCH %= 6;
+        return repoArr;
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
@@ -23578,16 +23571,21 @@ async function alreadyCreated(client, owner, repo) {
 async function getGoodMatch(client, topic, min_star) {
     while (true) {
         try {
-            const { owner, repo, path } = await getRepoWithWorkflow(client, topic);
-            CURR_MATCH++;
-            if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
-                const content = await getFile(client, owner, repo, path);
-                return {
-                    owner: owner,
-                    repository: repo,
-                    path: path,
-                    content: content
-                };
+            const repoArr = await getRepoWithWorkflow(client, topic);
+            while (CURR_MATCH < 6) {
+                let owner = repoArr.data.items[CURR_MATCH].repository.owner.login;
+                let repo = repoArr.data.items[CURR_MATCH].repository.name;
+                let path = repoArr.data.items[CURR_MATCH].path;
+                if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
+                    const content = await getFile(client, owner, repo, path);
+                    return {
+                        owner: owner,
+                        repository: repo,
+                        path: path,
+                        content: content
+                    };
+                }
+                CURR_MATCH++;
             }
         }
         catch (err) {

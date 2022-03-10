@@ -2,7 +2,6 @@ import * as core from "@actions/core"
 
 let CURR_PAGE = 1
 let CURR_MATCH = 6
-let search : any
 
 export async function get_details(client:any,issue_id:number, owner:string, repo:string){
   try{
@@ -19,22 +18,16 @@ export async function get_details(client:any,issue_id:number, owner:string, repo
   }   
 }
   
-async function getRepoWithWorkflow(client:any,topic:string):Promise<{ owner:string,repo:string,path:string }>{  
+async function getRepoWithWorkflow(client:any,topic:string){  
   try{
-    if(CURR_MATCH == 6){
-      CURR_PAGE++
-      search=await client.rest.search.code({
-      q:topic+" path:.github/workflows",
-      per_page:5,
-      page:CURR_PAGE    
-      })
-      CURR_MATCH %= 6
-    }
-    return {
-      owner:search.data.items[CURR_MATCH].repository.owner.login,
-      repo:search.data.items[CURR_MATCH].repository.name,
-      path:search.data.items[CURR_MATCH].path
-    }
+    CURR_PAGE++
+    const repoArr=await client.rest.search.code({
+    q:topic+" path:.github/workflows",
+    per_page:5,
+    page:CURR_PAGE    
+    })
+    CURR_MATCH %= 6
+    return repoArr
   }catch(err){
     core.setFailed(err)
   }   
@@ -73,16 +66,21 @@ async function alreadyCreated(client:any, owner:string, repo:string){
 export async function getGoodMatch(client:any, topic:string, min_star:number){
   while(true){
     try{
-      const {owner,repo,path} = await getRepoWithWorkflow(client,topic)
-      CURR_MATCH++
-      if(await getRepoStars(client,owner,repo)>=min_star && !(await alreadyCreated(client,owner,repo))){
-        const content = await getFile(client,owner,repo,path)
-        return{
-          owner:owner,
-          repository:repo,
-          path:path,
-          content:content
-        } 
+      const repoArr = await getRepoWithWorkflow(client,topic)
+      while(CURR_MATCH<6){
+        let owner = repoArr.data.items[CURR_MATCH].repository.owner.login
+        let repo = repoArr.data.items[CURR_MATCH].repository.name
+        let path = repoArr.data.items[CURR_MATCH].path
+        if(await getRepoStars(client,owner,repo)>=min_star && !(await alreadyCreated(client,owner,repo))){
+          const content = await getFile(client,owner,repo,path)
+          return{
+            owner:owner,
+            repository:repo,
+            path:path,
+            content:content
+          } 
+        }
+        CURR_MATCH++
       }
     }catch(err){
       core.setFailed(err)
