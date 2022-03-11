@@ -23483,13 +23483,16 @@ This repository has a Scorecards score of 4.5/10 with 10 being the most secure. 
 This file was fixed automatically using the open-source tool https://github.com/step-security/secure-workflows. If you like the change, and merge it, please consider starring the repo. `;
 const titlePR = "fix: permissions for ";
 function get_pr_update(owner, repository, path, username, workflow) {
-    let pr_update = `PR is added for
+    let pr_update = `Details of Secured workflow
 \`\`\`yml
     name: ${owner}
     repo: ${repository}
     path: ${path}
-    fork: https://github.com/${username}/${repository}
 \`\`\`
+
+links:
+repo: https://github.com/${owner}/${repository}
+fork: https://github.com/${username}/${repository}
 
 > Secured Workflow
 \`\`\`yml
@@ -23672,23 +23675,25 @@ try {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to forking repo and commiting changes");
                 const originRepo = octo.repos(owner, repository);
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting default branch of remote repo...");
-                const REMOTE_REPO = await client.rest.repos.get({ owner: owner, repo: repository });
-                let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch;
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`  Default branch: ${ORIGIN_BRANCH}`);
                 // create fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating fork of a repo whose workflow can be secured...");
                 const fork = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating permissions branch on forked repo...");
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(originRepo, fork, branchName, ORIGIN_BRANCH);
+                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(originRepo, fork, branchName);
                 // commit changes to the fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...");
                 let filename = path.split("/")[2];
                 let commitMessage = "added permisions for " + filename;
                 await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(fork, branchName, secureWorkflow.FinalOutput, path, commitMessage);
                 const autoPR = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("auto-pr");
-                if (autoPR) {
+                if (autoPR == "true") {
+                    // get ORIGIN_BRANCH
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting default branch of remote repo...");
+                    const REMOTE_REPO = await client.rest.repos.get({ owner: owner, repo: repository });
+                    let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch;
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`  Default branch: ${ORIGIN_BRANCH}`);
+                    //fix: wait to avoid secondary rate limit
                     // do pull request to remote branch
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating pull request to remote...");
                     let titlepr = _content__WEBPACK_IMPORTED_MODULE_6__/* .titlePR */ .kx + path.split("/")[2];
@@ -23808,12 +23813,12 @@ async function forkRepo(octo, originRepo, ORIGIN_REPO, username) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
     }
 }
-async function createNewBranch(originRepo, fork, branchName, ORIGIN_BRANCH) {
+async function createNewBranch(originRepo, fork, branchName) {
     try {
-        var forkCommits = await fork.commits.fetch({ sha: ORIGIN_BRANCH });
-        var originCommits = await originRepo.commits.fetch({ sha: ORIGIN_BRANCH });
+        var forkCommits = await fork.commits.fetch({ sha: 'master' });
+        var originCommits = await originRepo.commits.fetch({ sha: 'master' });
         if (originCommits[0].sha != forkCommits[0].sha) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   ${ORIGIN_BRANCH} branch of fork is not in sync, force updating from upstream`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("--- master branch of fork is not in sync, force updating from upstream");
             fork.git.refs('heads/master').update({
                 force: true,
                 sha: originCommits[0].sha
@@ -23852,21 +23857,22 @@ async function commitChanges(fork, branchName, content, path, commitMessage) {
     }
 }
 async function doPullRequest(originRepo, ORIGIN_BRANCH, branchName, username, title, prBody) {
-    let created = false;
     try {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating pull request...');
-        originRepo.pulls.create({
+        const pullRequest = originRepo.pulls.create({
             title: title,
             body: prBody,
             head: username + ":" + branchName,
             base: ORIGIN_BRANCH
         });
-        created = true;
-        return created;
+        return {
+            ok: true,
+            created: true,
+            pr: pullRequest,
+        };
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-        return created;
     }
 }
 

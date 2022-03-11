@@ -9,13 +9,16 @@ This file was fixed automatically using the open-source tool https://github.com/
 export const titlePR = "fix: permissions for "
 
 export function get_pr_update(owner:string,repository:string,path:string,username:string,workflow:string){
-let pr_update = `PR is added for
+let pr_update = `Details of Secured workflow
 \`\`\`yml
     name: ${owner}
     repo: ${repository}
     path: ${path}
-    fork: https://github.com/${username}/${repository}
 \`\`\`
+
+links:
+repo: https://github.com/${owner}/${repository}
+fork: https://github.com/${username}/${repository}
 
 > Secured Workflow
 \`\`\`yml

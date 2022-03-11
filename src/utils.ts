@@ -33,12 +33,12 @@ export async function forkRepo(octo:any,originRepo:any,ORIGIN_REPO:string,userna
   }  
 }
 
-export async function createNewBranch(originRepo:any,fork:any, branchName:string,ORIGIN_BRANCH:string) {
+export async function createNewBranch(originRepo:any,fork:any, branchName:string) {
   try{
-    var forkCommits = await fork.commits.fetch({sha: ORIGIN_BRANCH})
-    var originCommits = await originRepo.commits.fetch({sha: ORIGIN_BRANCH})
+    var forkCommits = await fork.commits.fetch({sha: 'master'})
+    var originCommits = await originRepo.commits.fetch({sha: 'master'})
     if (originCommits[0].sha != forkCommits[0].sha) {
-      core.info(`   ${ORIGIN_BRANCH} branch of fork is not in sync, force updating from upstream`)
+      core.info("--- master branch of fork is not in sync, force updating from upstream")
       fork.git.refs('heads/master').update({
         force: true,
         sha: originCommits[0].sha
@@ -77,19 +77,20 @@ export async function commitChanges(fork:any, branchName:string,content:string,p
 }
 
 export async function doPullRequest(originRepo:any,ORIGIN_BRANCH:string,branchName:string, username:string, title:string, prBody:string) {
-  let created = false
   try{
     core.info('--- creating pull request...')
-    originRepo.pulls.create({
+    const pullRequest = originRepo.pulls.create({
       title: title,
       body: prBody,
       head: username + ":" + branchName,
       base: ORIGIN_BRANCH
     })
-    created = true
-    return created
+    return {
+      ok: true,
+      created: true,
+      pr: pullRequest,
+    }
   }catch(err){
     core.setFailed(err)
-    return created
   }  
 }

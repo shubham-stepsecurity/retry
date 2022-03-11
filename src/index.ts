@@ -48,11 +48,8 @@ try{
             if(secureWorkflow.IsChanged){
                 core.info("permissions were added to the workflow\n")
                 core.startGroup("Proceding to forking repo and commiting changes")
+
                 const originRepo = octo.repos(owner,repository)
-                core.info("getting default branch of remote repo...")
-                const REMOTE_REPO = await client.rest.repos.get({owner:owner,repo:repository})
-                let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch
-                core.info(`  Default branch: ${ORIGIN_BRANCH}`)
 
                 // create fork
                 core.info("creating fork of a repo whose workflow can be secured...")
@@ -60,7 +57,7 @@ try{
 
                 // create new branch on fork
                 core.info("creating permissions branch on forked repo...")
-                await createNewBranch(originRepo,fork, branchName,ORIGIN_BRANCH)
+                await createNewBranch(originRepo,fork, branchName)
 
                 // commit changes to the fork
                 core.info("commiting changes to the forked repo...")
@@ -69,7 +66,14 @@ try{
                 await commitChanges(fork, branchName, secureWorkflow.FinalOutput, path, commitMessage)
 
                 const autoPR = core.getInput("auto-pr")
-                if(autoPR){
+                if(autoPR == "true"){
+                    // get ORIGIN_BRANCH
+                    core.info("getting default branch of remote repo...")
+                    const REMOTE_REPO = await client.rest.repos.get({owner:owner,repo:repository})
+                    let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch
+                    core.info(`  Default branch: ${ORIGIN_BRANCH}`)
+
+                    //fix: wait to avoid secondary rate limit
                     // do pull request to remote branch
                     core.info("creating pull request to remote...")
                     let titlepr = titlePR+path.split("/")[2]
