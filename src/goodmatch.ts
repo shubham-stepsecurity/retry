@@ -21,7 +21,6 @@ export async function get_details(client:any,issue_id:number, owner:string, repo
   
 async function getRepoWithWorkflow(client:any,topic:string){  
   try{
-    CURR_PAGE++
     const repoArr=await client.rest.search.code({
     q:topic+" path:.github/workflows",
     per_page:5,
@@ -92,9 +91,12 @@ export async function getGoodMatch(client:any, topic:string, min_star:number){
         }
         CURR_MATCH++
       }
+      CURR_PAGE++
     }catch(err){
       core.setFailed(err)
       return
     }   
   }
 }
+
+// TODO: log all matches

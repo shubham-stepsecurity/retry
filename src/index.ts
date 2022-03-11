@@ -39,9 +39,9 @@ try{
             core.endGroup()
 
             // secure flow using https://app.stepsecurity.io/
-            core.info("securing workflow...")
+            core.info("\nsecuring workflow...")
             const secureWorkflow = await getResponse(content)
-            core.info("secured Workflow\n")
+            core.info("secured Workflow")
 
             core.info("checking for added permissions...")
             // If secured (changed)
@@ -57,7 +57,7 @@ try{
 
                 // create new branch on fork
                 core.info("creating permissions branch on forked repo...")
-                await createNewBranch(originRepo,fork, branchName)
+                await createNewBranch(client,owner,repository,repos.owner, branchName)
 
                 // commit changes to the fork
                 core.info("commiting changes to the forked repo...")
@@ -85,7 +85,7 @@ try{
                 core.endGroup()
 
                 // log it by updating comment with pr details and pr url
-                core.info("adding comment to the issue with details of repo on whose workflow was secured")
+                core.info("\nadding comment to the issue with details of repo whose workflow was secured")
                 let pr_update = get_pr_update(owner,repository,path,repos.owner,secureWorkflow.FinalOutput)
                 await client.rest.issues.createComment({owner:repos.owner,repo:repos.repo,issue_number:issue_id,body:pr_update})
 
@@ -108,3 +108,6 @@ try{
 }catch(err){
     core.setFailed(err)
 }
+
+//TODO: fix branch and commit issue
+//TODO: fix star issue for getting good matches

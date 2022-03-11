@@ -23535,7 +23535,6 @@ async function get_details(client, issue_id, owner, repo) {
 }
 async function getRepoWithWorkflow(client, topic) {
     try {
-        CURR_PAGE++;
         const repoArr = await client.rest.search.code({
             q: topic + " path:.github/workflows",
             per_page: 5,
@@ -23605,6 +23604,7 @@ async function getGoodMatch(client, topic, min_star) {
                 }
                 CURR_MATCH++;
             }
+            CURR_PAGE++;
         }
         catch (err) {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
@@ -23612,6 +23612,7 @@ async function getGoodMatch(client, topic, min_star) {
         }
     }
 }
+// TODO: log all matches
 
 
 /***/ }),
@@ -23666,9 +23667,9 @@ try {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   path: ${path}`);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
             // secure flow using https://app.stepsecurity.io/
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("securing workflow...");
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nsecuring workflow...");
             const secureWorkflow = await (0,_secureflow__WEBPACK_IMPORTED_MODULE_4__/* .getResponse */ .c)(content);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow\n");
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow");
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking for added permissions...");
             // If secured (changed)
             if (secureWorkflow.IsChanged) {
@@ -23680,7 +23681,7 @@ try {
                 const fork = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating permissions branch on forked repo...");
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(originRepo, fork, branchName);
+                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
                 // commit changes to the fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...");
                 let filename = path.split("/")[2];
@@ -23704,7 +23705,7 @@ try {
                 }
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
                 // log it by updating comment with pr details and pr url
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("adding comment to the issue with details of repo on whose workflow was secured");
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nadding comment to the issue with details of repo whose workflow was secured");
                 let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, path, repos.owner, secureWorkflow.FinalOutput);
                 await client.rest.issues.createComment({ owner: repos.owner, repo: repos.repo, issue_number: issue_id, body: pr_update });
                 // increment curr_pr
@@ -23725,6 +23726,8 @@ try {
 catch (err) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
 }
+//TODO: fix branch and commit issue
+//TODO: fix star issue for getting good matches
 
 __webpack_handle_async_dependencies__();
 }, 1);
@@ -23813,30 +23816,18 @@ async function forkRepo(octo, originRepo, ORIGIN_REPO, username) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
     }
 }
-async function createNewBranch(originRepo, fork, branchName) {
+async function createNewBranch(client, origin_owner, repo, owner, branchName) {
     try {
-        var forkCommits = await fork.commits.fetch({ sha: 'master' });
-        var originCommits = await originRepo.commits.fetch({ sha: 'master' });
-        if (originCommits[0].sha != forkCommits[0].sha) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("--- master branch of fork is not in sync, force updating from upstream");
-            fork.git.refs('heads/master').update({
-                force: true,
-                sha: originCommits[0].sha
-            });
-        }
-        var allBranches = fork.git.refs.fetch();
-        var branch = allBranches.filter(function (item) {
-            var name = item.ref.split('/')[2]; // refs/heads/master -> master
-            return name === branchName;
-        })[0];
-        if (branch == null) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating branch...');
-            var branch = fork.git.refs.create({
-                ref: 'refs/heads/' + branchName,
-                sha: originCommits[0].sha // recent commit SHA
-            });
-        }
-        return originCommits[0].sha;
+        var originCommits = await client.rest.repos.getBranch({ owner: origin_owner, repo: repo, branch: "master" });
+        var branch_hash = originCommits.data.commit.sha;
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating branch...');
+        var branch = await client.rest.git.createRef({
+            owner: owner,
+            repo: repo,
+            ref: 'refs/heads/' + branchName,
+            sha: branch_hash
+        });
+        return branch.data.object.sha;
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);

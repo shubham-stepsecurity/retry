@@ -33,30 +33,19 @@ export async function forkRepo(octo:any,originRepo:any,ORIGIN_REPO:string,userna
   }  
 }
 
-export async function createNewBranch(originRepo:any,fork:any, branchName:string) {
+export async function createNewBranch(client:any,origin_owner:string,repo:string,owner:string, branchName:string) {
   try{
-    var forkCommits = await fork.commits.fetch({sha: 'master'})
-    var originCommits = await originRepo.commits.fetch({sha: 'master'})
-    if (originCommits[0].sha != forkCommits[0].sha) {
-      core.info("--- master branch of fork is not in sync, force updating from upstream")
-      fork.git.refs('heads/master').update({
-        force: true,
-        sha: originCommits[0].sha
-      })
-    }
-    var allBranches = fork.git.refs.fetch()
-    var branch = allBranches.filter(function(item:any) {
-      var name = item.ref.split('/')[2] // refs/heads/master -> master
-      return name === branchName
-    })[0]
-    if (branch == null) {
-      core.info('--- creating branch...')
-      var branch = fork.git.refs.create({
-        ref: 'refs/heads/' + branchName,
-        sha: originCommits[0].sha // recent commit SHA
-      })
-    }
-    return originCommits[0].sha
+    var originCommits = await client.rest.repos.getBranch({owner:origin_owner,repo:repo,branch:"master"})
+    var branch_hash = originCommits.data.commit.sha
+
+    core.info('--- creating branch...')
+    var branch = await client.rest.git.createRef({
+      owner:owner,
+      repo:repo,
+      ref:'refs/heads/' + branchName,
+      sha:branch_hash
+    })
+    return branch.data.object.sha
   }catch(err){
     core.setFailed(err)
   }  
