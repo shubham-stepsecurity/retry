@@ -8,12 +8,19 @@ This file was fixed automatically using the open-source tool https://github.com/
   
 export const titlePR = "fix: permissions for "
 
-export function get_pr_update(owner:string,repository:string,path:string){
-    let pr_update = `PR is added for \`\`\`yml
+export function get_pr_update(owner:string,repository:string,path:string,username:string,workflow:string){
+let pr_update = `PR is added for
+\`\`\`yml
     name: ${owner}
     repo: ${repository}
     path: ${path}
-    \`\`\`
-    `
-    return pr_update
+    fork: https://github.com/${username}/${repository}
+\`\`\`
+
+> Secured Workflow
+\`\`\`yml
+${workflow}
+\`\`\`
+`
+return pr_update
 }

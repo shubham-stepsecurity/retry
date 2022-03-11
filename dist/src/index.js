@@ -23482,13 +23482,20 @@ This repository has a Scorecards score of 4.5/10 with 10 being the most secure. 
 
 This file was fixed automatically using the open-source tool https://github.com/step-security/secure-workflows. If you like the change, and merge it, please consider starring the repo. `;
 const titlePR = "fix: permissions for ";
-function get_pr_update(owner, repository, path) {
-    let pr_update = `PR is added for \`\`\`yml
+function get_pr_update(owner, repository, path, username, workflow) {
+    let pr_update = `PR is added for
+\`\`\`yml
     name: ${owner}
     repo: ${repository}
     path: ${path}
-    \`\`\`
-    `;
+    fork: https://github.com/${username}/${repository}
+\`\`\`
+
+> Secured Workflow
+\`\`\`yml
+${workflow}
+\`\`\`
+`;
     return pr_update;
 }
 
@@ -23632,61 +23639,77 @@ __nccwpck_require__.r(__webpack_exports__);
 try {
     const issue_id = +_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("issue-id");
     const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("github-token");
+    const branchName = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("branch");
     const repos = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo; // context repo
     const client = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token); // authenticated octokit
     const octo = new (octokat__WEBPACK_IMPORTED_MODULE_2___default())({ token: token }); // create fork
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("=========== Starting Automation ===========");
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("     ================ Starting Automation ================");
     // get info from git issue
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting details for automation...");
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting details for automation...");
     const { topic, min_star, total_pr } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .get_details */ .A)(client, issue_id, repos.owner, repos.repo);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   topic: ${topic}`);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   min_star: ${min_star}`);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   total_pr: ${total_pr}`);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
     let curr_pr = 0;
     // iterate till we get desired number of PR's
     while (curr_pr < total_pr) {
         try {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting good matches...");
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting good matches...");
             const { owner, repository, path, content } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getGoodMatch */ .l)(client, topic, min_star);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("good match:");
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   owner: ${owner}`);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   repo: ${repository}`);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   path: ${path}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
             // secure flow using https://app.stepsecurity.io/
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("securing workflow...");
             const secureWorkflow = await (0,_secureflow__WEBPACK_IMPORTED_MODULE_4__/* .getResponse */ .c)(content);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow\n");
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking for added permissions...");
             // If secured (changed)
             if (secureWorkflow.IsChanged) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to forking repo and commiting changes");
+                const originRepo = octo.repos(owner, repository);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting default branch of remote repo...");
+                const REMOTE_REPO = await client.rest.repos.get({ owner: owner, repo: repository });
+                let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch;
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`  Default branch: ${ORIGIN_BRANCH}`);
                 // create fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating fork of a repo whose workflow can be secured...");
-                const originRepo = octo.repos(owner, repository);
                 const fork = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating permissions branch on forked repo...");
-                let branchName = "permissions";
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(originRepo, fork, branchName);
+                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(originRepo, fork, branchName, ORIGIN_BRANCH);
                 // commit changes to the fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...");
                 let filename = path.split("/")[2];
                 let commitMessage = "added permisions for " + filename;
                 await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(fork, branchName, secureWorkflow.FinalOutput, path, commitMessage);
-                // do pull request to remote branch
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating pull request to remote...");
-                const REMOTE_REPO = await client.rest.repos.get({ owner: owner, repo: repository });
-                let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch;
-                let titlepr = _content__WEBPACK_IMPORTED_MODULE_6__/* .titlePR */ .kx + path.split("/")[2];
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .doPullRequest */ .Rk)(originRepo, ORIGIN_BRANCH, branchName, owner, titlepr, _content__WEBPACK_IMPORTED_MODULE_6__/* .prBody */ .ud);
+                const autoPR = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("auto-pr");
+                if (autoPR) {
+                    // do pull request to remote branch
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating pull request to remote...");
+                    let titlepr = _content__WEBPACK_IMPORTED_MODULE_6__/* .titlePR */ .kx + path.split("/")[2];
+                    const created = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .doPullRequest */ .Rk)(originRepo, ORIGIN_BRANCH, branchName, repos.owner, titlepr, _content__WEBPACK_IMPORTED_MODULE_6__/* .prBody */ .ud);
+                    if (created) {
+                        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("Created Pull request...");
+                    }
+                }
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
                 // log it by updating comment with pr details and pr url
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("adding comment to the issue with details of repo on which pr is created");
-                let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, path);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("adding comment to the issue with details of repo on whose workflow was secured");
+                let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, path, repos.owner, secureWorkflow.FinalOutput);
                 await client.rest.issues.createComment({ owner: repos.owner, repo: repos.repo, issue_number: issue_id, body: pr_update });
                 // increment curr_pr
                 curr_pr++;
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`added ${curr_pr} pr`);
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured ${curr_pr} workflow`);
             }
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`added desired(${total_pr}) number of pr...`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured desired(${total_pr}) number of workflow...`);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action executed successfully :)`);
-            //  TODO: If not secured (not changed), log error by adding comment to the issue
+            // TODO: If not secured (not changed), log error by adding comment to the issue
+            // TODO: IF fix all, then fix all the workflows of the repo
         }
         catch (err) {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
@@ -23770,13 +23793,13 @@ async function forkRepo(octo, originRepo, ORIGIN_REPO, username) {
         await originRepo.forks.create();
         var tryCounter = 0;
         while (fork == null && tryCounter < WAIT_FOR_FORK) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('   waiting until repo is forked');
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- waiting until repo is forked');
             bluebird__WEBPACK_IMPORTED_MODULE_1___default().delay(tryCounter * 1000);
             fork = await octo.repos(username, ORIGIN_REPO).fetch();
             tryCounter++;
         }
         if (fork == null) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('   could not fork the origin repo');
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- could not fork the origin repo');
             return null;
         }
         return fork;
@@ -23785,12 +23808,12 @@ async function forkRepo(octo, originRepo, ORIGIN_REPO, username) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
     }
 }
-async function createNewBranch(originRepo, fork, branchName) {
+async function createNewBranch(originRepo, fork, branchName, ORIGIN_BRANCH) {
     try {
-        var forkCommits = await fork.commits.fetch({ sha: 'master' });
-        var originCommits = await originRepo.commits.fetch({ sha: 'master' });
+        var forkCommits = await fork.commits.fetch({ sha: ORIGIN_BRANCH });
+        var originCommits = await originRepo.commits.fetch({ sha: ORIGIN_BRANCH });
         if (originCommits[0].sha != forkCommits[0].sha) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('   master branch of fork is not in sync, force updating from upstream');
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   ${ORIGIN_BRANCH} branch of fork is not in sync, force updating from upstream`);
             fork.git.refs('heads/master').update({
                 force: true,
                 sha: originCommits[0].sha
@@ -23802,7 +23825,7 @@ async function createNewBranch(originRepo, fork, branchName) {
             return name === branchName;
         })[0];
         if (branch == null) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('   creating branch...');
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating branch...');
             var branch = fork.git.refs.create({
                 ref: 'refs/heads/' + branchName,
                 sha: originCommits[0].sha // recent commit SHA
@@ -23829,22 +23852,21 @@ async function commitChanges(fork, branchName, content, path, commitMessage) {
     }
 }
 async function doPullRequest(originRepo, ORIGIN_BRANCH, branchName, username, title, prBody) {
+    let created = false;
     try {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('   creating pull request...');
-        const pullRequest = originRepo.pulls.create({
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating pull request...');
+        originRepo.pulls.create({
             title: title,
             body: prBody,
             head: username + ":" + branchName,
             base: ORIGIN_BRANCH
         });
-        return {
-            ok: true,
-            created: true,
-            pr: pullRequest,
-        };
+        created = true;
+        return created;
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+        return created;
     }
 }
 

@@ -8,6 +8,15 @@ inputs:
     description: "github-token to be used for octokit authentication"
     required: true
     default: "${{github.token}}"
+  fix-all:
+    description: "fix all workflows of the Repo"
+    default: false
+  auto-pr:
+    description: "Automatically create pr to forked repos"
+    default: false
+  branch:
+    description: "New branch created on forked repo"
+    default: "Permissions"
     
 
 runs:
