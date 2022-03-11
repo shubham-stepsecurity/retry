@@ -23549,8 +23549,16 @@ async function getRepoStars(client, owner, repo) {
 }
 async function getFile(client, owner, repo, path) {
     try {
-        const content = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path });
-        return Buffer.from(content, "base64").toString(); // b64 decoding before returning
+        const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path });
+        if (!Array.isArray(data)) {
+            const workflow = data;
+            if (typeof workflow.content !== undefined) {
+                return Buffer.from(workflow.content, "base64").toString(); // b64 decoding before returning
+            }
+        }
+        else {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed("not a file path...");
+        }
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);

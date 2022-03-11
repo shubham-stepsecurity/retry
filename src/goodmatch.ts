@@ -1,4 +1,5 @@
 import * as core from "@actions/core"
+import { components } from '@octokit/openapi-types'
 
 let CURR_PAGE = 1
 let CURR_MATCH = 6
@@ -41,11 +42,20 @@ async function getRepoStars(client:any, owner:string, repo:string){
     core.setFailed(err)
   }   
 }
-  
-async function getFile(client:any, owner:string, repo:string, path:string){
+
+type GetRepoContentResponseDataFile = components["schemas"]["content-file"]
+async function getFile(client:any,owner:string, repo:string, path:string){
   try{
-    const content =  await client.rest.repos.getContent({owner: owner, repo: repo,path: path})
-    return Buffer.from(content, "base64").toString() // b64 decoding before returning
+    const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: path})
+    if (!Array.isArray(data)) {
+      const workflow = data as GetRepoContentResponseDataFile
+  
+      if (typeof workflow.content !== undefined) {
+        return Buffer.from(workflow.content, "base64").toString() // b64 decoding before returning
+      }
+    }else{
+      core.setFailed("not a file path...")
+    }
   }catch(err){
     core.setFailed(err)
   }   
