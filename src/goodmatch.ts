@@ -14,12 +14,14 @@ export async function get_details(client:any,issue_id:number, owner:string, repo
     total_pr: +body_content[3].split(":")[1]
   }   
 }
-  
+
 async function getRepoWithWorkflow(client:any,topic:string){  
   const repoArr=await client.rest.search.code({
   q:topic+" path:.github/workflows",
   per_page:5,
-  page:CURR_PAGE    
+  page:CURR_PAGE,
+  order: "asc",
+  sort: "indexed"
   })
   CURR_MATCH %= 6
   return repoArr

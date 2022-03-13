@@ -23532,7 +23532,9 @@ async function getRepoWithWorkflow(client, topic) {
     const repoArr = await client.rest.search.code({
         q: topic + " path:.github/workflows",
         per_page: 5,
-        page: CURR_PAGE
+        page: CURR_PAGE,
+        order: "asc",
+        sort: "indexed"
     });
     CURR_MATCH %= 6;
     return repoArr;
