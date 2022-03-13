@@ -45,7 +45,7 @@ try{
 
             core.info("checking for added permissions...")
             // If secured (changed)
-            if(secureWorkflow.IsChanged){
+            if((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors){
                 core.info("permissions were added to the workflow\n")
                 core.startGroup("Proceding to forking repo and commiting changes")
 
@@ -93,8 +93,6 @@ try{
                 curr_pr++
                 core.info(`secured ${curr_pr} workflow`)
             }
-            core.info(`secured desired(${total_pr}) number of workflow...`)
-            core.info(`action executed successfully :)`)
 
             // TODO: If not secured (not changed), log error by adding comment to the issue
 
@@ -105,9 +103,11 @@ try{
             break
         }   
     }
+    core.info(`secured desired(${total_pr}) number of workflow...`)
+    core.info(`action executed successfully :)`)
 }catch(err){
     core.setFailed(err)
 }
 
-//TODO: fix commit issue
+//TODO: update fork code to use client instead of octokat
 //TODO: fix star issue for getting good matches

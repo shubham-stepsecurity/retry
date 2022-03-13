@@ -23519,97 +23519,66 @@ ${workflow}
 let CURR_PAGE = 1;
 let CURR_MATCH = 6;
 async function get_details(client, issue_id, owner, repo) {
-    try {
-        const resp = await client.rest.issues.get({ issue_number: Number(issue_id), owner: owner, repo: repo });
-        const body = resp.data.body;
-        const body_content = body.split("\n");
-        return {
-            topic: body_content[1].split(":")[1],
-            min_star: +body_content[2].split(":")[1],
-            total_pr: +body_content[3].split(":")[1]
-        };
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    const resp = await client.rest.issues.get({ issue_number: Number(issue_id), owner: owner, repo: repo });
+    const body = resp.data.body;
+    const body_content = body.split("\n");
+    return {
+        topic: body_content[1].split(":")[1],
+        min_star: +body_content[2].split(":")[1],
+        total_pr: +body_content[3].split(":")[1]
+    };
 }
 async function getRepoWithWorkflow(client, topic) {
-    try {
-        const repoArr = await client.rest.search.code({
-            q: topic + " path:.github/workflows",
-            per_page: 5,
-            page: CURR_PAGE
-        });
-        CURR_MATCH %= 6;
-        return repoArr;
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    const repoArr = await client.rest.search.code({
+        q: topic + " path:.github/workflows",
+        per_page: 5,
+        page: CURR_PAGE
+    });
+    CURR_MATCH %= 6;
+    return repoArr;
 }
 async function getRepoStars(client, owner, repo) {
-    try {
-        const repo_details = await client.rest.repos.get({ owner: owner, repo: repo });
-        return repo_details.data.stargazers_count;
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    const repo_details = await client.rest.repos.get({ owner: owner, repo: repo });
+    return repo_details.data.stargazers_count;
 }
 async function getFile(client, owner, repo, path) {
-    try {
-        const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path });
-        if (!Array.isArray(data)) {
-            const workflow = data;
-            if (typeof workflow.content !== undefined) {
-                return Buffer.from(workflow.content, "base64").toString(); // b64 decoding before returning
-            }
-        }
-        else {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed("not a file path...");
+    const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path });
+    if (!Array.isArray(data)) {
+        const workflow = data;
+        if (typeof workflow.content !== undefined) {
+            return Buffer.from(workflow.content, "base64").toString(); // b64 decoding before returning
         }
     }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+    else {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed("not a file path...");
     }
 }
 // check whether the pr is already created or not
 async function alreadyCreated(client, owner, repo) {
-    try {
-        // whether pr already created or not (change to all when using in secureworkflow repo)
-        const pr = await client.rest.pulls.list({ owner: owner, repo: repo, state: "open" });
-        return (pr.data.length > 0 ? true : false);
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    // whether pr already created or not (change to all when using in secureworkflow repo)
+    const pr = await client.rest.pulls.list({ owner: owner, repo: repo, state: "open" });
+    return (pr.data.length > 0 ? true : false);
 }
 // get good matches
 async function getGoodMatch(client, topic, min_star) {
     while (true) {
-        try {
-            const repoArr = await getRepoWithWorkflow(client, topic);
-            while (CURR_MATCH < 6) {
-                let owner = repoArr.data.items[CURR_MATCH].repository.owner.login;
-                let repo = repoArr.data.items[CURR_MATCH].repository.name;
-                let path = repoArr.data.items[CURR_MATCH].path;
-                if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
-                    const content = await getFile(client, owner, repo, path);
-                    return {
-                        owner: owner,
-                        repository: repo,
-                        path: path,
-                        content: content
-                    };
-                }
-                CURR_MATCH++;
+        const repoArr = await getRepoWithWorkflow(client, topic);
+        while (CURR_MATCH < 6) {
+            let owner = repoArr.data.items[CURR_MATCH].repository.owner.login;
+            let repo = repoArr.data.items[CURR_MATCH].repository.name;
+            let path = repoArr.data.items[CURR_MATCH].path;
+            if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
+                const content = await getFile(client, owner, repo, path);
+                return {
+                    owner: owner,
+                    repository: repo,
+                    path: path,
+                    content: content
+                };
             }
-            CURR_PAGE++;
+            CURR_MATCH++;
         }
-        catch (err) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-            return;
-        }
+        CURR_PAGE++;
     }
 }
 // TODO: log all matches
@@ -23672,7 +23641,7 @@ try {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow");
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking for added permissions...");
             // If secured (changed)
-            if (secureWorkflow.IsChanged) {
+            if ((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to forking repo and commiting changes");
                 const originRepo = octo.repos(owner, repository);
@@ -23712,8 +23681,6 @@ try {
                 curr_pr++;
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured ${curr_pr} workflow`);
             }
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured desired(${total_pr}) number of workflow...`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action executed successfully :)`);
             // TODO: If not secured (not changed), log error by adding comment to the issue
             // TODO: IF fix all, then fix all the workflows of the repo
         }
@@ -23722,11 +23689,13 @@ try {
             break;
         }
     }
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured desired(${total_pr}) number of workflow...`);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action executed successfully :)`);
 }
 catch (err) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
 }
-//TODO: fix commit issue
+//TODO: update fork code to use client instead of octokat
 //TODO: fix star issue for getting good matches
 
 __webpack_handle_async_dependencies__();
@@ -23741,28 +23710,20 @@ __webpack_handle_async_dependencies__();
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "c": () => (/* binding */ getResponse)
 /* harmony export */ });
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(5127);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(7126);
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
-
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(7126);
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
 
 async function getResponse(payload) {
-    const apiClient = axios__WEBPACK_IMPORTED_MODULE_1___default().create({
+    const apiClient = axios__WEBPACK_IMPORTED_MODULE_0___default().create({
         baseURL: 'https://sa0mwebuda.execute-api.us-west-2.amazonaws.com',
         responseType: 'json',
         headers: {
             'Content-Type': 'text/plain'
         }
     });
-    try {
-        const response = await apiClient.post('/v1/secure-workflow?addHardenRunner=false&pinActions=false&', payload);
-        const user = response.data;
-        return user;
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    const response = await apiClient.post('/v1/secure-workflow?addHardenRunner=false&pinActions=false&', payload);
+    const user = response.data;
+    return user;
 }
 ;
 
@@ -23796,85 +23757,65 @@ var base64Encode = function (content) {
     }
 };
 async function forkRepo(octo, originRepo, ORIGIN_REPO, username) {
-    try {
-        let fork = null;
-        await originRepo.forks.create();
-        var tryCounter = 0;
-        while (fork == null && tryCounter < WAIT_FOR_FORK) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- waiting until repo is forked');
-            bluebird__WEBPACK_IMPORTED_MODULE_1___default().delay(tryCounter * 1000);
-            fork = await octo.repos(username, ORIGIN_REPO).fetch();
-            tryCounter++;
-        }
-        if (fork == null) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- could not fork the origin repo');
-            return null;
-        }
-        return fork;
+    let fork = null;
+    await originRepo.forks.create();
+    var tryCounter = 0;
+    while (fork == null && tryCounter < WAIT_FOR_FORK) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- waiting until repo is forked');
+        bluebird__WEBPACK_IMPORTED_MODULE_1___default().delay(tryCounter * 1000);
+        fork = await octo.repos(username, ORIGIN_REPO).fetch();
+        tryCounter++;
     }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+    if (fork == null) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- could not fork the origin repo');
+        return null;
     }
+    return fork;
 }
 async function createNewBranch(client, origin_owner, repo, owner, branchName) {
-    try {
-        var originCommits = await client.rest.repos.getBranch({ owner: origin_owner, repo: repo, branch: "master" });
-        var branch_hash = originCommits.data.commit.sha;
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating branch...');
-        var branch = await client.rest.git.createRef({
-            owner: owner,
-            repo: repo,
-            ref: 'refs/heads/' + branchName,
-            sha: branch_hash
-        });
-        return branch.data.object.sha;
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    var originCommits = await client.rest.repos.getBranch({ owner: origin_owner, repo: repo, branch: "master" });
+    var branch_hash = originCommits.data.commit.sha;
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating branch...');
+    var branch = await client.rest.git.createRef({
+        owner: owner,
+        repo: repo,
+        ref: 'refs/heads/' + branchName,
+        sha: branch_hash
+    });
+    return branch.data.object.sha;
 }
 async function commitChanges(client, owner, repo, branch, path, content, commitMessage, commitsha) {
-    try {
-        // get tree sha
-        const commitData = await client.rest.git.getCommit({ owner, repo, commit_sha: commitsha });
-        const treeSha = commitData.data.tree.sha;
-        // createBlobForFile 
-        const blobData = await client.rest.git.createBlob({ owner, repo, content, encoding: 'utf-8', });
-        //  createNewTree 
-        let tree = [{
-                path: path,
-                mode: `100644`,
-                type: `blob`,
-                sha: blobData.data.sha,
-            }];
-        const { data } = await client.rest.git.createTree({ owner, repo, tree, base_tree: treeSha });
-        // create new commit
-        const NewCommit = (await client.rest.git.createCommit({ owner, repo, message: commitMessage, tree: data.sha, parents: [commitsha] })).data;
-        // set branch to commit
-        await client.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha });
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    // get tree sha
+    const commitData = await client.rest.git.getCommit({ owner, repo, commit_sha: commitsha });
+    const treeSha = commitData.data.tree.sha;
+    // createBlobForFile 
+    const blobData = await client.rest.git.createBlob({ owner, repo, content, encoding: 'utf-8', });
+    //  createNewTree 
+    let tree = [{
+            path: path,
+            mode: `100644`,
+            type: `blob`,
+            sha: blobData.data.sha,
+        }];
+    const { data } = await client.rest.git.createTree({ owner, repo, tree, base_tree: treeSha });
+    // create new commit
+    const NewCommit = (await client.rest.git.createCommit({ owner, repo, message: commitMessage, tree: data.sha, parents: [commitsha] })).data;
+    // set branch to commit
+    await client.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha });
 }
 async function doPullRequest(originRepo, ORIGIN_BRANCH, branchName, username, title, prBody) {
-    try {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating pull request...');
-        const pullRequest = originRepo.pulls.create({
-            title: title,
-            body: prBody,
-            head: username + ":" + branchName,
-            base: ORIGIN_BRANCH
-        });
-        return {
-            ok: true,
-            created: true,
-            pr: pullRequest,
-        };
-    }
-    catch (err) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-    }
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating pull request...');
+    const pullRequest = originRepo.pulls.create({
+        title: title,
+        body: prBody,
+        head: username + ":" + branchName,
+        base: ORIGIN_BRANCH
+    });
+    return {
+        ok: true,
+        created: true,
+        pr: pullRequest,
+    };
 }
 
 

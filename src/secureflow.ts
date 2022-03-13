@@ -26,11 +26,7 @@ export async function getResponse (payload : any){
     }
   });
 
-  try {
-    const response = await apiClient.post<SecureWorkflowReponse>('/v1/secure-workflow?addHardenRunner=false&pinActions=false&', payload);
-    const user = response.data;
-    return user;
-  } catch (err) {
-    core.setFailed(err)
-  }
+  const response = await apiClient.post<SecureWorkflowReponse>('/v1/secure-workflow?addHardenRunner=false&pinActions=false&', payload);
+  const user = response.data;
+  return user;
 };
