@@ -23609,45 +23609,46 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 
+const issue_id = +_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("issue-id");
+const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("github-token");
+const branchName = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("branch");
+let actionFailed = false; // check action state
+const repos = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo; // context repo
+const client = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token); // authenticated octokit
+const octo = new (octokat__WEBPACK_IMPORTED_MODULE_2___default())({ token: token }); // create fork
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.info("     ================ Starting Automation ================");
+// get info from git issue
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting details for automation...");
+const { topic, min_star, total_pr } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .get_details */ .A)(client, issue_id, repos.owner, repos.repo);
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   topic: ${topic}`);
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   min_star: ${min_star}`);
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   total_pr: ${total_pr}`);
+_actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
 try {
-    const issue_id = +_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("issue-id");
-    const token = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("github-token");
-    const branchName = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("branch");
-    const repos = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context.repo; // context repo
-    const client = _actions_github__WEBPACK_IMPORTED_MODULE_1__.getOctokit(token); // authenticated octokit
-    const octo = new (octokat__WEBPACK_IMPORTED_MODULE_2___default())({ token: token }); // create fork
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("     ================ Starting Automation ================");
-    // get info from git issue
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting details for automation...");
-    const { topic, min_star, total_pr } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .get_details */ .A)(client, issue_id, repos.owner, repos.repo);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   topic: ${topic}`);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   min_star: ${min_star}`);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   total_pr: ${total_pr}`);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
     let curr_pr = 0;
     // iterate till we get desired number of PR's
     while (curr_pr < total_pr) {
-        try {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting good matches...");
-            const { owner, repository, path, content } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getGoodMatch */ .l)(client, topic, min_star);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("good match:");
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   owner: ${owner}`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   repo: ${repository}`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   path: ${path}`);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
-            // secure flow using https://app.stepsecurity.io/
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nsecuring workflow...");
-            const secureWorkflow = await (0,_secureflow__WEBPACK_IMPORTED_MODULE_4__/* .getResponse */ .c)(content);
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow");
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking for added permissions...");
-            // If secured (changed)
-            if ((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors) {
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to forking repo and commiting changes");
-                const originRepo = octo.repos(owner, repository);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("getting good matches...");
+        const { owner, repository, path, content } = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getGoodMatch */ .l)(client, topic, min_star);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("good match:");
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   owner: ${owner}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   repo: ${repository}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`   path: ${path}`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
+        // secure flow using https://app.stepsecurity.io/
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nsecuring workflow...");
+        const secureWorkflow = await (0,_secureflow__WEBPACK_IMPORTED_MODULE_4__/* .getResponse */ .c)(content);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("secured Workflow");
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking for added permissions...");
+        // If secured (changed)
+        if ((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors) {
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to forking repo and commiting changes");
+            const originRepo = octo.repos(owner, repository);
+            try {
                 // create fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating fork of a repo whose workflow can be secured...");
-                const fork = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
+                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating permissions branch on forked repo...");
                 const commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
@@ -23663,7 +23664,6 @@ try {
                     const REMOTE_REPO = await client.rest.repos.get({ owner: owner, repo: repository });
                     let ORIGIN_BRANCH = REMOTE_REPO.data.default_branch;
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`  Default branch: ${ORIGIN_BRANCH}`);
-                    //fix: wait to avoid secondary rate limit
                     // do pull request to remote branch
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating pull request to remote...");
                     let titlepr = _content__WEBPACK_IMPORTED_MODULE_6__/* .titlePR */ .kx + path.split("/")[2];
@@ -23673,30 +23673,38 @@ try {
                     }
                 }
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.endGroup();
-                // log it by updating comment with pr details and pr url
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nadding comment to the issue with details of repo whose workflow was secured");
-                let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, path, repos.owner, secureWorkflow.FinalOutput);
-                await client.rest.issues.createComment({ owner: repos.owner, repo: repos.repo, issue_number: issue_id, body: pr_update });
-                // increment curr_pr
-                curr_pr++;
-                _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured ${curr_pr} workflow`);
             }
-            // TODO: If not secured (not changed), log error by adding comment to the issue
-            // TODO: IF fix all, then fix all the workflows of the repo
+            catch (err) {
+                _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+                actionFailed = true;
+            }
+            // log it by updating comment with pr details and pr url
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nadding comment to the issue with details of repo whose workflow was secured");
+            let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, path, repos.owner, secureWorkflow.FinalOutput);
+            await client.rest.issues.createComment({ owner: repos.owner, repo: repos.repo, issue_number: issue_id, body: pr_update });
+            // increment curr_pr
+            curr_pr++;
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured ${curr_pr} workflow`);
         }
-        catch (err) {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
-            break;
-        }
+        // TODO: If not secured (not changed), log error by adding comment to the issue
+        // TODO: IF fix all, then fix all the workflows of the repo
     }
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured desired(${total_pr}) number of workflow...`);
-    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action executed successfully :)`);
 }
 catch (err) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
+    actionFailed = true;
 }
+if (!actionFailed) {
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`secured desired(${total_pr}) number of workflow...`);
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action executed successfully :)`);
+}
+else {
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`action failed :(`);
+}
+//TODO: improve logging
 //TODO: update fork code to use client instead of octokat
-//TODO: fix star issue for getting good matches
+//TODO: fix star issue for getting good matches (It might be because the seconadry rate limit is exceeding)
+//      add try catch statement to getcontent and wait for token permission to reset, repeat till we get desired output
 
 __webpack_handle_async_dependencies__();
 }, 1);

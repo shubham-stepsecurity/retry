@@ -1,5 +1,5 @@
 import * as core from "@actions/core"
-import promise, { all } from 'bluebird'
+import promise from 'bluebird'
 
 let WAIT_FOR_FORK = 5
 
