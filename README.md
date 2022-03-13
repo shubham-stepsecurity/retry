@@ -4,7 +4,7 @@ This action finds repos containing workflows without permissions and the uses St
 >motivation is to avoid supply chain attacks
 
 ## Usage
->Note : This action requires, `contents:read` & `issues:write` permissions, so make sure to declare them in `job_permissions`.
+>Note : This action requires, `contents:read`, `actions:write` & `issues:write` permissions, so make sure to declare them in `job_permissions`.
 
 Just add below snippet in your `workflow's job steps` to put this action into work.
 
