@@ -23681,12 +23681,12 @@ try {
                 const fork = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("creating permissions branch on forked repo...");
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
+                const commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
                 // commit changes to the fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...");
                 let filename = path.split("/")[2];
                 let commitMessage = "added permisions for " + filename;
-                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(fork, branchName, secureWorkflow.FinalOutput, path, commitMessage);
+                await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(client, repos.owner, repository, branchName, path, secureWorkflow.FinalOutput, commitMessage, commitsha);
                 const autoPR = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("auto-pr");
                 if (autoPR == "true") {
                     // get ORIGIN_BRANCH
@@ -23726,7 +23726,7 @@ try {
 catch (err) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
 }
-//TODO: fix branch and commit issue
+//TODO: fix commit issue
 //TODO: fix star issue for getting good matches
 
 __webpack_handle_async_dependencies__();
@@ -23833,15 +23833,25 @@ async function createNewBranch(client, origin_owner, repo, owner, branchName) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);
     }
 }
-async function commitChanges(fork, branchName, content, path, commitMessage) {
+async function commitChanges(client, owner, repo, branch, path, content, commitMessage, commitsha) {
     try {
-        var config = {
-            message: commitMessage,
-            content: base64Encode(content),
-            branch: branchName
-        };
-        fork.contents(path).add(config);
-        return;
+        // get tree sha
+        const commitData = await client.rest.git.getCommit({ owner, repo, commit_sha: commitsha });
+        const treeSha = commitData.data.tree.sha;
+        // createBlobForFile 
+        const blobData = await client.rest.git.createBlob({ owner, repo, content, encoding: 'utf-8', });
+        //  createNewTree 
+        let tree = [{
+                path: path,
+                mode: `100644`,
+                type: `blob`,
+                sha: blobData.data.sha,
+            }];
+        const { data } = await client.rest.git.createTree({ owner, repo, tree, base_tree: treeSha });
+        // create new commit
+        const NewCommit = (await client.rest.git.createCommit({ owner, repo, message: commitMessage, tree: data.sha, parents: [commitsha] })).data;
+        // set branch to commit
+        await client.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha });
     }
     catch (err) {
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(err);

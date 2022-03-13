@@ -52,27 +52,31 @@ export async function createNewBranch(client:any,origin_owner:string,repo:string
 }
 
 export async function commitChanges(client:any, owner:string, repo:string, branch:string, path:string, content:string, commitMessage:string, commitsha:string){
-  // get tree sha
-  const commitData = await client.rest.git.getCommit({owner,repo,commit_sha:commitsha})
-  const treeSha = commitData.data.tree.sha
+  try{
+    // get tree sha
+    const commitData = await client.rest.git.getCommit({owner,repo,commit_sha:commitsha})
+    const treeSha = commitData.data.tree.sha
 
-  // createBlobForFile 
-  const blobData = await client.rest.git.createBlob({owner, repo, content, encoding: 'utf-8',})
+    // createBlobForFile 
+    const blobData = await client.rest.git.createBlob({owner, repo, content, encoding: 'utf-8',})
 
-  //  createNewTree 
-  let tree: { path?: string; mode?: "100644" | "100755" | "040000" | "160000" | "120000"; type?: "blob" | "tree" | "commit"; sha?: string; content?: string; }[] = [{
-    path: path,
-    mode: `100644`,
-    type: `blob`,
-    sha: blobData.data.sha,
-  }]
-  const { data } = await client.rest.git.createTree({owner, repo, tree, base_tree: treeSha})
+    //  createNewTree 
+    let tree: { path?: string; mode?: "100644" | "100755" | "040000" | "160000" | "120000"; type?: "blob" | "tree" | "commit"; sha?: string; content?: string; }[] = [{
+      path: path,
+      mode: `100644`,
+      type: `blob`,
+      sha: blobData.data.sha,
+    }]
+    const { data } = await client.rest.git.createTree({owner, repo, tree, base_tree: treeSha})
 
-  // create new commit
-  const NewCommit = (await client.rest.git.createCommit({owner, repo, message:commitMessage, tree: data.sha, parents: [commitsha]})).data
+    // create new commit
+    const NewCommit = (await client.rest.git.createCommit({owner, repo, message:commitMessage, tree: data.sha, parents: [commitsha]})).data
 
-  // set branch to commit
-  await client.rest.git.updateRef({owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha})
+    // set branch to commit
+    await client.rest.git.updateRef({owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha})
+  }catch(err){
+    core.setFailed(err)
+  }
 }
 
 export async function doPullRequest(originRepo:any,ORIGIN_BRANCH:string,branchName:string, username:string, title:string, prBody:string) {
