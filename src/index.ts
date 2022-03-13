@@ -57,13 +57,13 @@ try{
 
                 // create new branch on fork
                 core.info("creating permissions branch on forked repo...")
-                await createNewBranch(client,owner,repository,repos.owner, branchName)
+                const commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
 
                 // commit changes to the fork
                 core.info("commiting changes to the forked repo...")
                 let filename = path.split("/")[2]
                 let commitMessage = "added permisions for " + filename
-                await commitChanges(fork, branchName, secureWorkflow.FinalOutput, path, commitMessage)
+                await commitChanges(client,repos.owner, repository, branchName, path, secureWorkflow.FinalOutput, commitMessage,commitsha)
 
                 const autoPR = core.getInput("auto-pr")
                 if(autoPR == "true"){
@@ -109,5 +109,5 @@ try{
     core.setFailed(err)
 }
 
-//TODO: fix branch and commit issue
+//TODO: fix commit issue
 //TODO: fix star issue for getting good matches
