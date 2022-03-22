@@ -140,13 +140,19 @@ try{
                 // If secured (changed)
                 if((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors){
                     core.info("permissions were added to the workflow\n")
-                    core.startGroup("Proceding to commiting changes")
                     // commit changes to the fork
-                    core.info("commiting changes to the forked repo...")
+                    core.info("commiting changes to the forked repo...\n")
                     let commitMessage = "added permisions for " + worklflows[curr]
                     await commitChanges(client,repos.owner, repository, branchName, ".github/workflows/"+worklflows[curr], secureWorkflow.FinalOutput, commitMessage,commitsha)
+                    core.info("Changes are commited to the repo")
+                    
+                    // log it by updating comment with pr details and pr url
+                    core.info("adding comment to the issue with details of repo whose workflow was secured\n")
+                    let pr_update = get_pr_update(owner, repository, ".github/workflows/"+worklflows[curr], repos.owner, secureWorkflow.FinalOutput)
+                    await client.rest.issues.createComment({owner:repos.owner, repo:repos.repo, issue_number:issue_id, body:pr_update})
+                    
                 }else{
-                    core.info("Failed to secure the workflow...")
+                    core.info("Failed to secure the workflow...\n")
                     //TODO: log the error
                 }
                 curr++

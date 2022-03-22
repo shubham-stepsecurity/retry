@@ -23746,14 +23746,18 @@ try {
                 // If secured (changed)
                 if ((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors) {
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("permissions were added to the workflow\n");
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.startGroup("Proceding to commiting changes");
                     // commit changes to the fork
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("commiting changes to the forked repo...\n");
                     let commitMessage = "added permisions for " + worklflows[curr];
                     await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(client, repos.owner, repository, branchName, ".github/workflows/" + worklflows[curr], secureWorkflow.FinalOutput, commitMessage, commitsha);
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("Changes are commited to the repo");
+                    // log it by updating comment with pr details and pr url
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("adding comment to the issue with details of repo whose workflow was secured\n");
+                    let pr_update = (0,_content__WEBPACK_IMPORTED_MODULE_6__/* .get_pr_update */ .Uu)(owner, repository, ".github/workflows/" + worklflows[curr], repos.owner, secureWorkflow.FinalOutput);
+                    await client.rest.issues.createComment({ owner: repos.owner, repo: repos.repo, issue_number: issue_id, body: pr_update });
                 }
                 else {
-                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("Failed to secure the workflow...");
+                    _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("Failed to secure the workflow...\n");
                     //TODO: log the error
                 }
                 curr++;
