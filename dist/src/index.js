@@ -23597,7 +23597,7 @@ async function getGoodMatch(client, topic, min_star) {
 async function getFilesInFolder(client, owner, repo) {
     const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: ".github/workflows" });
     const folder = data;
-    let worklflows;
+    const worklflows = [];
     let curr = 0;
     while (curr < folder.length) {
         worklflows.push(folder[curr].name);

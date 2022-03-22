@@ -90,7 +90,7 @@ type GetRepoContentResponseDataFolder = components["schemas"]["content-directory
 export async function getFilesInFolder(client:any, owner:string, repo:string){
   const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: ".github/workflows"})
   const folder = data as GetRepoContentResponseDataFolder
-  let worklflows : string[]
+  const worklflows = []
   let curr=0
   while(curr<folder.length){
     worklflows.push(folder[curr].name)
