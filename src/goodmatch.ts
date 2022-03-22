@@ -8,14 +8,14 @@ export async function get_details(client:any,issue_id:number, owner:string, repo
   const resp=await client.rest.issues.get({issue_number: Number(issue_id ), owner: owner, repo:repo})
   const body:string=resp.data.body
   const body_content=body.split("\n")
-  if(body_content[1]=="fix-repo"){
+  if(body_content[1].includes("fix-repo")){
     return {
-      name: body_content[2].split(":")[1],
+      name: body_content[2].split(":")[1].trim(),
       fix_repo: true
     }
   }else{
     return{
-      topic: body_content[1].split(":")[1],
+      topic: body_content[1].split(":")[1].trim(),
       min_star: +body_content[2].split(":")[1],
       total_pr: +body_content[3].split(":")[1],
       fix_repo: false
