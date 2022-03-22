@@ -127,7 +127,7 @@ try{
 
             // create new branch on fork
             core.info(`\ncreating "${branchName}" branch on forked repo...`)
-            const commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+            let commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
 
             // iterate over workflows 
             let curr=0
@@ -146,7 +146,7 @@ try{
                     // commit changes to the fork
                     core.info("--- commiting changes to the forked repo...")
                     let commitMessage = "added permisions for " + worklflows[curr]
-                    await commitChanges(client,repos.owner, repository, branchName, ".github/workflows/"+worklflows[curr], secureWorkflow.FinalOutput, commitMessage,commitsha)
+                    commitsha = await commitChanges(client,repos.owner, repository, branchName, ".github/workflows/"+worklflows[curr], secureWorkflow.FinalOutput, commitMessage,commitsha)
                     core.info("--- Changes are commited to the repo")
                     
                     // log it by updating comment with pr details and pr url

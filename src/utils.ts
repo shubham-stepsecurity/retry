@@ -56,7 +56,8 @@ export async function commitChanges(client:any, owner:string, repo:string, branc
   const NewCommit = (await client.rest.git.createCommit({owner, repo, message:commitMessage, tree: data.sha, parents: [commitsha]})).data
 
   // set branch to commit
-  await client.rest.git.updateRef({owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha})
+  const branchRef = await client.rest.git.updateRef({owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha})
+  return branchRef.data.object.sha
 }
 
 export async function doPullRequest(originRepo:any,ORIGIN_BRANCH:string,branchName:string, username:string, title:string, prBody:string) {

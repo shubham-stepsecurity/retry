@@ -23735,7 +23735,7 @@ try {
             await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
             // create new branch on fork
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`\ncreating "${branchName}" branch on forked repo...`);
-            const commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
+            let commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
             // iterate over workflows 
             let curr = 0;
             while (curr < worklflows.length) {
@@ -23751,7 +23751,7 @@ try {
                     // commit changes to the fork
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("--- commiting changes to the forked repo...");
                     let commitMessage = "added permisions for " + worklflows[curr];
-                    await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(client, repos.owner, repository, branchName, ".github/workflows/" + worklflows[curr], secureWorkflow.FinalOutput, commitMessage, commitsha);
+                    commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .commitChanges */ .VA)(client, repos.owner, repository, branchName, ".github/workflows/" + worklflows[curr], secureWorkflow.FinalOutput, commitMessage, commitsha);
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("--- Changes are commited to the repo");
                     // log it by updating comment with pr details and pr url
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("=> adding comment to the issue with details of repo whose workflow was secured\n");
@@ -23880,7 +23880,8 @@ async function commitChanges(client, owner, repo, branch, path, content, commitM
     // create new commit
     const NewCommit = (await client.rest.git.createCommit({ owner, repo, message: commitMessage, tree: data.sha, parents: [commitsha] })).data;
     // set branch to commit
-    await client.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha });
+    const branchRef = await client.rest.git.updateRef({ owner, repo, ref: `heads/${branch}`, sha: NewCommit.sha });
+    return branchRef.data.object.sha;
 }
 async function doPullRequest(originRepo, ORIGIN_BRANCH, branchName, username, title, prBody) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info('--- creating pull request...');
