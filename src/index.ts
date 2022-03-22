@@ -64,7 +64,7 @@ try{
                     await forkRepo(octo,originRepo,repository,repos.owner)
 
                     // create new branch on fork
-                    core.info("creating permissions branch on forked repo...")
+                    core.info(`creating "${branchName}" branch on forked repo...`)
                     const commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
 
                     // commit changes to the fork
@@ -108,21 +108,25 @@ try{
             // TODO: If not secured (not changed), log error by adding comment to the issue
 
         }
+        core.info(`secured desired(${details.total_pr}) number of workflow...`)
+
     }else{ // IF fix all, then fix all the workflows of the repo
         const owner_repo = details.name.split("/")
         const owner = owner_repo[0]
         const repository = owner_repo[1]
         try{
             // get list of workflows
+            core.info("\ngetting list of workflows from the repo...")
             const worklflows = await getFilesInFolder(client, owner, repository)
+            core.info(`Found ${worklflows.length} workflows inside the repo\n`)
             
             // create fork
             const originRepo = octo.repos(owner,repository)
-            core.info("creating fork of a repo whose workflow can be secured...")
+            core.info("\ncreating fork of a repo whose workflow can be secured...")
             await forkRepo(octo,originRepo,repository,repos.owner)
 
             // create new branch on fork
-            core.info("creating permissions branch on forked repo...")
+            core.info(`\ncreating "${branchName}" branch on forked repo...`)
             const commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
 
             // iterate over workflows 
@@ -134,20 +138,19 @@ try{
                 // fix workflow 
                 core.info("\nsecuring workflow...")
                 const secureWorkflow = await getResponse(content)
-                core.info("secured Workflow")
 
                 core.info(`checking for added permissions in ${worklflows[curr]}...`)
                 // If secured (changed)
                 if((content != secureWorkflow.FinalOutput) && !secureWorkflow.HasErrors){
-                    core.info("permissions were added to the workflow\n")
+                    core.info("permissions were added to the workflow")
                     // commit changes to the fork
-                    core.info("commiting changes to the forked repo...\n")
+                    core.info("--- commiting changes to the forked repo...")
                     let commitMessage = "added permisions for " + worklflows[curr]
                     await commitChanges(client,repos.owner, repository, branchName, ".github/workflows/"+worklflows[curr], secureWorkflow.FinalOutput, commitMessage,commitsha)
-                    core.info("Changes are commited to the repo")
+                    core.info("--- Changes are commited to the repo")
                     
                     // log it by updating comment with pr details and pr url
-                    core.info("adding comment to the issue with details of repo whose workflow was secured\n")
+                    core.info("=> adding comment to the issue with details of repo whose workflow was secured\n")
                     let pr_update = get_pr_update(owner, repository, ".github/workflows/"+worklflows[curr], repos.owner, secureWorkflow.FinalOutput)
                     await client.rest.issues.createComment({owner:repos.owner, repo:repos.repo, issue_number:issue_id, body:pr_update})
                     
@@ -168,7 +171,6 @@ try{
 }
 
 if(!actionFailed){
-    core.info(`secured desired(${details.total_pr}) number of workflow...`)
     core.info(`action executed successfully :)`)
 }else{
     core.info(`action failed :(`)
