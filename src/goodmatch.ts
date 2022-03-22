@@ -8,11 +8,19 @@ export async function get_details(client:any,issue_id:number, owner:string, repo
   const resp=await client.rest.issues.get({issue_number: Number(issue_id ), owner: owner, repo:repo})
   const body:string=resp.data.body
   const body_content=body.split("\n")
-  return{
-    topic: body_content[1].split(":")[1],
-    min_star: +body_content[2].split(":")[1],
-    total_pr: +body_content[3].split(":")[1]
-  }   
+  if(body_content[1]=="fix-repo"){
+    return {
+      name: body_content[2].split(":")[1],
+      fix_repo: true
+    }
+  }else{
+    return{
+      topic: body_content[1].split(":")[1],
+      min_star: +body_content[2].split(":")[1],
+      total_pr: +body_content[3].split(":")[1],
+      fix_repo: false
+    }  
+  }
 }
 
 async function getRepoWithWorkflow(client:any,topic:string){  
@@ -33,7 +41,7 @@ async function getRepoStars(client:any, owner:string, repo:string){
 }
 
 type GetRepoContentResponseDataFile = components["schemas"]["content-file"]
-async function getFile(client:any,owner:string, repo:string, path:string){
+export async function getFile(client:any,owner:string, repo:string, path:string){
   const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: path})
   if (!Array.isArray(data)) {
     const workflow = data as GetRepoContentResponseDataFile
@@ -77,3 +85,16 @@ export async function getGoodMatch(client:any, topic:string, min_star:number){
 }
 
 // TODO: log all matches
+
+type GetRepoContentResponseDataFolder = components["schemas"]["content-directory"]
+export async function getFilesInFolder(client:any, owner:string, repo:string){
+  const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: ".github/workflows"})
+  const folder = data as GetRepoContentResponseDataFolder
+  let worklflows : string[]
+  let curr=0
+  while(curr<folder.length){
+    worklflows.push(folder[curr].name)
+    curr++
+  }
+  return worklflows
+}

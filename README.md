@@ -21,7 +21,6 @@ Add Below snipet to the job to trigger the workflow whenever an issue is created
 ```yml
 if: github.event.label.name == 'Automate'
 ```
-> Note: Please do not use fix-all, it is not ready yet
 
 Now, whenever a issue with `Automate` label is created, this action will perform `Automation` and will create `Pull-request` to workflow repo with added permissions.
 

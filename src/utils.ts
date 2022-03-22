@@ -3,14 +3,6 @@ import promise from 'bluebird'
 
 let WAIT_FOR_FORK = 5
 
-// support nodejs and browser runtime
-var base64Encode = function(content:string) {
-  if (typeof btoa !== 'undefined') {
-    return btoa(content)
-  } else {
-    return new Buffer(content).toString('base64')
-  }
-}
 
 export async function forkRepo(octo:any,originRepo:any,ORIGIN_REPO:string,username:string) {
   let fork = null

@@ -2,20 +2,19 @@ name: Automate PR
 on:
   issues:
     types:
-      # - labeled     
-      - opened
+      - labeled    
       - reopened
-      # only needed labeled, using opened and reopened for time being 
 
-# permissions:
-#   contents: read
+permissions:
+  contents: read
 
 jobs:
   Automate:
-    # if: github.event.label.name == 'Automate'
+    if: github.event.label.name == 'Automate'
     runs-on: ubuntu-latest
-    # permissions:
-    #   issues: write
+    permissions:
+      issues: write
+      actions: write
     
     steps:
       - uses: actions/checkout@v3
