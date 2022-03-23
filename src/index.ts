@@ -132,10 +132,16 @@ try{
             const worklflows = await getFilesInFolder(client, owner, repository)
             core.info(`Found ${worklflows.length} workflows inside the repo\n`)
             
-            const check = await client.rest.repos.get({owner:owner, repo:repository})
+            let exist : boolean
             core.info("checking if fork already exit or not...\n")
+            try{
+                await client.rest.repos.get({owner:repos.owner, repo:repository})
+                exist = true
+            }catch{
+                exist = false
+            }
             let commitsha : string
-            if(check.status != 200){
+            if(!exist){
                 core.info("fork does not exit")
                 // create fork
                 const originRepo = octo.repos(owner,repository)

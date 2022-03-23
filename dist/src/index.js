@@ -23742,10 +23742,17 @@ try {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\ngetting list of workflows from the repo...");
             const worklflows = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getFilesInFolder */ .si)(client, owner, repository);
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Found ${worklflows.length} workflows inside the repo\n`);
-            const check = await client.rest.repos.get({ owner: owner, repo: repository });
+            let exist;
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking if fork already exit or not...\n");
+            try {
+                await client.rest.repos.get({ owner: repos.owner, repo: repository });
+                exist = true;
+            }
+            catch (_a) {
+                exist = false;
+            }
             let commitsha;
-            if (check.status != 200) {
+            if (!exist) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork does not exit");
                 // create fork
                 const originRepo = octo.repos(owner, repository);
