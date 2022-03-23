@@ -61,6 +61,7 @@ try{
                 try{
                     const check = await client.rest.repos.get({owner:owner, repo:repository})
                     core.info("checking if fork already exit or not...\n")
+                    let commitsha : string
                     if(check.status != 200){
                         core.info("fork does not exit")
                         // create fork
@@ -70,11 +71,11 @@ try{
             
                         // create new branch on fork
                         core.info(`\ncreating "${branchName}" branch on forked repo...`)
-                        var commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+                        commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
                     }else{
                         core.info("fork already exit")
                         core.info("getting commit sha of forked repo...\n")
-                        const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName})
+                        const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: `heads/${branchName}`})
                         commitsha = repoRef.data.object.sha
                     }
                     
@@ -133,6 +134,7 @@ try{
             
             const check = await client.rest.repos.get({owner:owner, repo:repository})
             core.info("checking if fork already exit or not...\n")
+            let commitsha : string
             if(check.status != 200){
                 core.info("fork does not exit")
                 // create fork
@@ -142,11 +144,11 @@ try{
     
                 // create new branch on fork
                 core.info(`\ncreating "${branchName}" branch on forked repo...`)
-                var commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+                commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
             }else{
                 core.info("fork already exit")
                 core.info("getting commit sha of forked repo...\n")
-                const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName})
+                const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: `heads/${branchName}`})
                 commitsha = repoRef.data.object.sha
             }
 

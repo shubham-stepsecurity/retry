@@ -23678,6 +23678,7 @@ try {
                 try {
                     const check = await client.rest.repos.get({ owner: owner, repo: repository });
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking if fork already exit or not...\n");
+                    let commitsha;
                     if (check.status != 200) {
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork does not exit");
                         // create fork
@@ -23686,12 +23687,12 @@ try {
                         await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                         // create new branch on fork
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`\ncreating "${branchName}" branch on forked repo...`);
-                        var commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
+                        commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
                     }
                     else {
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork already exit");
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting commit sha of forked repo...\n");
-                        const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName });
+                        const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: `heads/${branchName}` });
                         commitsha = repoRef.data.object.sha;
                     }
                     // commit changes to the fork
@@ -23743,6 +23744,7 @@ try {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Found ${worklflows.length} workflows inside the repo\n`);
             const check = await client.rest.repos.get({ owner: owner, repo: repository });
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("checking if fork already exit or not...\n");
+            let commitsha;
             if (check.status != 200) {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork does not exit");
                 // create fork
@@ -23751,12 +23753,12 @@ try {
                 await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .forkRepo */ .B0)(octo, originRepo, repository, repos.owner);
                 // create new branch on fork
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`\ncreating "${branchName}" branch on forked repo...`);
-                var commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
+                commitsha = await (0,_utils__WEBPACK_IMPORTED_MODULE_5__/* .createNewBranch */ .N4)(client, owner, repository, repos.owner, branchName);
             }
             else {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork already exit");
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting commit sha of forked repo...\n");
-                const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName });
+                const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: `heads/${branchName}` });
                 commitsha = repoRef.data.object.sha;
             }
             // iterate over workflows 
