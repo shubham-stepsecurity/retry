@@ -23554,8 +23554,8 @@ async function getRepoStars(client, owner, repo) {
     const repo_details = await client.rest.repos.get({ owner: owner, repo: repo });
     return repo_details.data.stargazers_count;
 }
-async function getFile(client, owner, repo, path) {
-    const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path });
+async function getFile({ client, owner, repo, path, branchName = "master" }) {
+    const { data } = await client.rest.repos.getContent({ owner: owner, repo: repo, path: path, ref: `heads/${branchName}` });
     if (!Array.isArray(data)) {
         const workflow = data;
         if (typeof workflow.content !== undefined) {
@@ -23581,7 +23581,7 @@ async function getGoodMatch(client, topic, min_star) {
             let repo = repoArr.data.items[CURR_MATCH].repository.name;
             let path = repoArr.data.items[CURR_MATCH].path;
             if (await getRepoStars(client, owner, repo) >= min_star && !(await alreadyCreated(client, owner, repo))) {
-                const content = await getFile(client, owner, repo, path);
+                const content = await getFile({ client, owner, repo, path });
                 return {
                     owner: owner,
                     repository: repo,
@@ -23765,7 +23765,7 @@ try {
             let curr = 0;
             while (curr < worklflows.length) {
                 // get content
-                const content = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getFile */ .hn)(client, owner, repository, ".github/workflows/" + worklflows[curr]);
+                const content = await (0,_goodmatch__WEBPACK_IMPORTED_MODULE_3__/* .getFile */ .hn)({ client, owner: repos.owner, repo: repository, path: ".github/workflows/" + worklflows[curr], branchName });
                 // fix workflow 
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("\nsecuring workflow...");
                 const secureWorkflow = await (0,_secureflow__WEBPACK_IMPORTED_MODULE_4__/* .getResponse */ .c)(content);

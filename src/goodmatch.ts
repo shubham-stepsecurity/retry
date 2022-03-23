@@ -41,8 +41,8 @@ async function getRepoStars(client:any, owner:string, repo:string){
 }
 
 type GetRepoContentResponseDataFile = components["schemas"]["content-file"]
-export async function getFile(client:any,owner:string, repo:string, path:string){
-  const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: path})
+export async function getFile({client,owner, repo, path, branchName= "master"}:{client:any,owner:string, repo:string, path:string, branchName?:string}){
+  const {data} =  await client.rest.repos.getContent({owner: owner, repo: repo,path: path, ref: `heads/${branchName}`})
   if (!Array.isArray(data)) {
     const workflow = data as GetRepoContentResponseDataFile
 
@@ -70,7 +70,7 @@ export async function getGoodMatch(client:any, topic:string, min_star:number){
       let repo = repoArr.data.items[CURR_MATCH].repository.name
       let path = repoArr.data.items[CURR_MATCH].path
       if(await getRepoStars(client,owner,repo)>=min_star && !(await alreadyCreated(client,owner,repo))){
-        const content = await getFile(client,owner,repo,path)
+        const content = await getFile({client,owner,repo,path})
         return{
           owner:owner,
           repository:repo,
@@ -85,6 +85,7 @@ export async function getGoodMatch(client:any, topic:string, min_star:number){
 }
 
 // TODO: log all matches
+// TODO: log reason to skip matches
 
 type GetRepoContentResponseDataFolder = components["schemas"]["content-directory"]
 export async function getFilesInFolder(client:any, owner:string, repo:string){

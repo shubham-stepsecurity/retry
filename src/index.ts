@@ -156,7 +156,7 @@ try{
             let curr=0
             while(curr<worklflows.length){
                 // get content
-                const content = await getFile(client,owner,repository,".github/workflows/"+worklflows[curr])
+                const content = await getFile({client, owner: repos.owner, repo: repository, path: ".github/workflows/"+worklflows[curr],branchName})
 
                 // fix workflow 
                 core.info("\nsecuring workflow...")
