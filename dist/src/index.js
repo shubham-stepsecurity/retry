@@ -23691,7 +23691,7 @@ try {
                     else {
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork already exit");
                         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting commit sha of forked repo...\n");
-                        const repoRef = await client.rest.git.getRef({ owner: owner, repo: repository, ref: 'refs/heads/' + branchName });
+                        const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName });
                         commitsha = repoRef.data.object.sha;
                     }
                     // commit changes to the fork
@@ -23756,7 +23756,7 @@ try {
             else {
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("fork already exit");
                 _actions_core__WEBPACK_IMPORTED_MODULE_0__.info("getting commit sha of forked repo...\n");
-                const repoRef = await client.rest.git.getRef({ owner: owner, repo: repository, ref: 'refs/heads/' + branchName });
+                const repoRef = await client.rest.git.getRef({ owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName });
                 commitsha = repoRef.data.object.sha;
             }
             // iterate over workflows 

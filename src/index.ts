@@ -74,7 +74,7 @@ try{
                     }else{
                         core.info("fork already exit")
                         core.info("getting commit sha of forked repo...\n")
-                        const repoRef = await client.rest.git.getRef({owner: owner, repo: repository, ref: 'refs/heads/' + branchName})
+                        const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName})
                         commitsha = repoRef.data.object.sha
                     }
                     
@@ -146,7 +146,7 @@ try{
             }else{
                 core.info("fork already exit")
                 core.info("getting commit sha of forked repo...\n")
-                const repoRef = await client.rest.git.getRef({owner: owner, repo: repository, ref: 'refs/heads/' + branchName})
+                const repoRef = await client.rest.git.getRef({owner: repos.owner, repo: repository, ref: 'refs/heads/' + branchName})
                 commitsha = repoRef.data.object.sha
             }
 
