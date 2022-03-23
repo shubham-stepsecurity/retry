@@ -59,14 +59,25 @@ try{
                 const originRepo = octo.repos(owner,repository)
 
                 try{
-                    // create fork
-                    core.info("creating fork of a repo whose workflow can be secured...")
-                    await forkRepo(octo,originRepo,repository,repos.owner)
-
-                    // create new branch on fork
-                    core.info(`creating "${branchName}" branch on forked repo...`)
-                    const commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
-
+                    const check = await client.rest.repos.get({owner:owner, repo:repository})
+                    core.info("checking if fork already exit or not...\n")
+                    if(check.status != 200){
+                        core.info("fork does not exit")
+                        // create fork
+                        const originRepo = octo.repos(owner,repository)
+                        core.info("creating fork of a repo whose workflow can be secured...")
+                        await forkRepo(octo,originRepo,repository,repos.owner)
+            
+                        // create new branch on fork
+                        core.info(`\ncreating "${branchName}" branch on forked repo...`)
+                        var commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+                    }else{
+                        core.info("fork already exit")
+                        core.info("getting commit sha of forked repo...\n")
+                        const repoRef = await client.rest.git.getRef({owner: owner, repo: repository, ref: 'refs/heads/' + branchName})
+                        commitsha = repoRef.data.object.sha
+                    }
+                    
                     // commit changes to the fork
                     core.info("commiting changes to the forked repo...")
                     let filename = path.split("/")[2]
@@ -120,14 +131,24 @@ try{
             const worklflows = await getFilesInFolder(client, owner, repository)
             core.info(`Found ${worklflows.length} workflows inside the repo\n`)
             
-            // create fork
-            const originRepo = octo.repos(owner,repository)
-            core.info("\ncreating fork of a repo whose workflow can be secured...")
-            await forkRepo(octo,originRepo,repository,repos.owner)
-
-            // create new branch on fork
-            core.info(`\ncreating "${branchName}" branch on forked repo...`)
-            let commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+            const check = await client.rest.repos.get({owner:owner, repo:repository})
+            core.info("checking if fork already exit or not...\n")
+            if(check.status != 200){
+                core.info("fork does not exit")
+                // create fork
+                const originRepo = octo.repos(owner,repository)
+                core.info("creating fork of a repo whose workflow can be secured...")
+                await forkRepo(octo,originRepo,repository,repos.owner)
+    
+                // create new branch on fork
+                core.info(`\ncreating "${branchName}" branch on forked repo...`)
+                var commitsha = await createNewBranch(client,owner,repository,repos.owner, branchName)
+            }else{
+                core.info("fork already exit")
+                core.info("getting commit sha of forked repo...\n")
+                const repoRef = await client.rest.git.getRef({owner: owner, repo: repository, ref: 'refs/heads/' + branchName})
+                commitsha = repoRef.data.object.sha
+            }
 
             // iterate over workflows 
             let curr=0
@@ -176,7 +197,6 @@ if(!actionFailed){
     core.info(`action failed :(`)
 }
 
+//TODO: improve commit message
 //TODO: improve logging
 //TODO: update fork code to use client instead of octokat
-//TODO: fix star issue for getting good matches (It might be because the seconadry rate limit is exceeding)
-//      add try catch statement to getcontent and wait for token permission to reset, repeat till we get desired output
