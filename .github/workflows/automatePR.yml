@@ -3,15 +3,13 @@ on:
   issues:
     types:
       - labeled
-      - opened
-      - reopened
 
 permissions:
   contents: read
 
 jobs:
   Automate:
-    # if: github.event.label.name == 'Automate'
+    if: github.event.label.name == 'Automate'
     runs-on: ubuntu-latest
     permissions:
       issues: write
