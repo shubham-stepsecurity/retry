@@ -1,4 +1,3 @@
-/**-------------  Testing pre-release workflow -----------**/
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
