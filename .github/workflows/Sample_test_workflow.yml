@@ -1,0 +1,22 @@
+name: Int Harden Runner
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  harden-and-basic-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run Step Security Harden Runner
+        uses: step-security/harden-runner@int
+        with:
+          egress-policy: audit
+
+      - name: List Files in Repository
+        run: ls -al
+
+      - name: Make API Call with Curl
+        run: |
+          curl -X GET "https://google.com" -H "Content-Type: application/json"
