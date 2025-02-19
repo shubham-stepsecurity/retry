@@ -16,6 +16,6 @@ jobs:
       actions: read
       id-token: write
       contents: write
-    uses: step-security/reusable-workflows/.github/workflows/actions_release.yaml@shubham-patch-1
+    uses: step-security/reusable-workflows/.github/workflows/actions_release.yaml@b2293b1775fbc6cb86d4628246b8fb3567adc96b
     with:
       tag: "${{ github.event.inputs.tag }}"
