@@ -11,6 +11,9 @@
     "style": "npm run style:base -- .",
     "test": "jest -c ./.config/jest.config.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/step-security/retry.git"
