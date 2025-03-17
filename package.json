@@ -1,6 +1,6 @@
 {
   "name": "@shubham-stepsecurity/retry",
-  "version": "0.0.0-managed-by-semantic-release",
+  "version": "0.0.0",
   "description": "Retries a GitHub Action step on failure or timeout.",
   "scripts": {
     "lint:base": "eslint --config ./.config/.eslintrc.js ",
