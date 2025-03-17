@@ -6,6 +6,7 @@ on:
       - 'v*.*.*'  # This triggers on any tag matching the pattern "v1.2.3"
   workflow_dispatch:
 
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -13,15 +14,20 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Use Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20  # or 18, depending on your preference
+          node-version: 16
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@shubham-stepsecurity'
 
       - name: Install dependencies
         run: npm install
 
+      - name: Build package
+        run: npm run prepare
+
       - name: Publish to npm
-        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
